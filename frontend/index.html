@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Food Recipe AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            padding: 40px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            min-height: 50px;
+            cursor: text;
+        }
+
+        .tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .recipe-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .recipe-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .recipe-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .recipe-meta {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .recipe-body {
+            padding: 30px;
+        }
+
+        .ingredients-section, .instructions-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ingredient-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .ingredient-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .ingredient-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .instruction-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instruction-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+            padding-left: 40px;
+            line-height: 1.6;
+        }
+
+        .instruction-list li:before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .instruction-list {
+            counter-reset: step-counter;
+        }
+
+        .detected-ingredients {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .ingredients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ingredient-tag {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c33;
+        }
+
+        .success {
+            background: #efe;
+            color: #363;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #363;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tab {
+                padding: 15px 10px;
+                font-size: 0.9rem;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+            
+            .recipe-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-utensils"></i> Free Food Recipe AI</h1>
+            <p>Powered by Qwen AI - Completely Free Forever!</p>
+        </div>
+
+        <div class="main-card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('upload')">
+                    <i class="fas fa-camera"></i> Upload Image
+                </button>
+                <button class="tab" onclick="switchTab('text')">
+                    <i class="fas fa-keyboard"></i> Type Ingredients
+                </button>
+            </div>
+
+            <div id="upload-tab" class="tab-content active">
+                <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <div class="upload-text">Drop your food image here or click to browse</div>
+                    <div class="upload-subtext">Supports JPG, PNG, WebP</div>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                
+                <div id="imagePreview" style="display: none; text-align: center; margin: 20px 0;">
+                    <img id="previewImg" style="max-width: 300px; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                </div>
+
+                <div class="input-group">
+                    <label for="servings">Number of Servings:</label>
+                    <input type="number" id="servings" class="input-field" value="2" min="1" max="10">
+                </div>
+
+                <div class="input-group">
+                    <label for="cuisine">Cuisine Preference:</label>
+                    <select id="cuisine" class="input-field">
+                        <option value="any">Any Cuisine</option>
+                        <option value="italian">Italian</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="indian">Indian</option>
+                        <option value="mexican">Mexican</option>
+                        <option value="japanese">Japanese</option>
+                        <option value="mediterranean">Mediterranean</option>
+                        <option value="american">American</option>
+                        <option value="thai">Thai</option>
+                        <option value="french">French</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Dietary Preferences:</label>
+                    <div class="tags-input" id="dietaryTags">
+                        <input type="text" placeholder="Add dietary restrictions (press Enter)" id="dietaryInput" style="border: none; outline: none; flex: 1; min-width: 150px;">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="analyzeImage()" id="analyzeBtn">
+                    <i class="fas fa-magic"></i> Analyze Image & Generate Recipes
+                </button>
+            </div>
+
+            <div id="text-tab" class="tab-content">
+                <div class="input-group">
+                    <label for="ingredientsText">Your Ingredients:</label>
+                    <textarea id="ingredientsText" class="input-field" rows="4" placeholder="Enter your ingredients separated by commas (e.g., tomatoes, onions, garlic, pasta, cheese)"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="servingsText">Number of Servings:</label>
+                    <input type="number" id="servingsText" class="input-field" value="2" min="1" max="10">
+                </div>
+
+                <div class="input-group">
+                    <label for="cuisineText">Cuisine Preference:</label>
+                    <select id="cuisineText" class="input-field">
+                        <option value="any">Any Cuisine</option>
+                        <option value="italian">Italian</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="indian">Indian</option>
+                        <option value="mexican">Mexican</option>
+                        <option value="japanese">Japanese</option>
+                        <option value="mediterranean">Mediterranean</option>
+                        <option value="american">American</option>
+                        <option value="thai">Thai</option>
+                        <option value="french">French</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Dietary Preferences:</label>
+                    <div class="tags-input" id="dietaryTagsText">
+                        <input type="text" placeholder="Add dietary restrictions (press Enter)" id="dietaryInputText" style="border: none; outline: none; flex: 1; min-width: 150px;">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generateFromText()" id="generateBtn">
+                    <i class="fas fa-utensils"></i> Generate Recipes
+                </button>
+            </div>
+        </div>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        let dietaryRestrictions = [];
+        let detectedIngredients = [];
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        // File upload handling
+        const uploadArea = document.querySelector('.upload-area');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Dietary restrictions handling
+        function setupDietaryTags(inputId, containerId) {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(containerId);
+
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && input.value.trim()) {
+                    addDietaryTag(input.value.trim(), container);
+                    input.value = '';
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function addDietaryTag(text, container) {
+            if (dietaryRestrictions.includes(text.toLowerCase())) return;
+
+            dietaryRestrictions.push(text.toLowerCase());
+            
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${text}
+                <span class="remove" onclick="removeDietaryTag('${text.toLowerCase()}', this)">&times;</span>
+            `;
+            
+            container.insertBefore(tag, container.querySelector('input'));
+        }
+
+        function removeDietaryTag(text, element) {
+            dietaryRestrictions = dietaryRestrictions.filter(item => item !== text);
+            element.parentElement.remove();
+        }
+
+        // Initialize dietary tags
+        setupDietaryTags('dietaryInput', 'dietaryTags');
+        setupDietaryTags('dietaryInputText', 'dietaryTagsText');
+
+        // API calls
+        async function analyzeImage() {
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files[0]) {
+                showError('Please select an image first.');
+                return;
+            }
+
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+
+            try {
+                // First, analyze the image
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                const analyzeResponse = await fetch('http://localhost:8001/analyze-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!analyzeResponse.ok) {
+                    throw new Error('Image analysis failed');
+                }
+
+                const analyzeResult = await analyzeResponse.json();
+                detectedIngredients = analyzeResult.ingredients;
+
+                if (detectedIngredients.length === 0) {
+                    showError('Could not detect any ingredients in the image. Please try a clearer image or use the text input method.');
+                    return;
+                }
+
+                showDetectedIngredients(detectedIngredients);
+
+                // Then generate recipes
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Recipes...';
+
+                const recipeData = {
+                    ingredients: detectedIngredients,
+                    dietary_preferences: dietaryRestrictions,
+                    cuisine_type: document.getElementById('cuisine').value,
+                    servings: parseInt(document.getElementById('servings').value)
+                };
+
+                const recipeResponse = await fetch('http://localhost:8001/generate-recipes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(recipeData)
+                });
+
+                if (!recipeResponse.ok) {
+                    throw new Error('Recipe generation failed');
+                }
+
+                const recipeResult = await recipeResponse.json();
+                displayRecipes(recipeResult.recipes);
+                showSuccess(`Generated ${recipeResult.recipes.length} delicious recipes!`);
+
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic"></i> Analyze Image & Generate Recipes';
+            }
+        }
+
+        async function generateFromText() {
+            const ingredientsText = document.getElementById('ingredientsText').value.trim();
+            if (!ingredientsText) {
+                showError('Please enter some ingredients.');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Recipes...';
+
+            try {
+                const recipeData = {
+                    ingredients: ingredientsText,
+                    dietary_preferences: dietaryRestrictions,
+                    cuisine_type: document.getElementById('cuisineText').value,
+                    servings: parseInt(document.getElementById('servingsText').value)
+                };
+
+                const response = await fetch('http://localhost:8001/ingredients-to-recipes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(recipeData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Recipe generation failed');
+                }
+
+                const result = await response.json();
+                displayRecipes(result.recipes);
+                showSuccess(`Generated ${result.recipes.length} delicious recipes!`);
+
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-utensils"></i> Generate Recipes';
+            }
+        }
+
+        function showDetectedIngredients(ingredients) {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="detected-ingredients">
+                    <h3><i class="fas fa-eye"></i> Detected Ingredients (${ingredients.length})</h3>
+                    <div class="ingredients-grid">
+                        ${ingredients.map(ingredient => `
+                            <div class="ingredient-tag">${ingredient}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayRecipes(recipes) {
+            const results = document.getElementById('results');
+            
+            const recipesHtml = recipes.map(recipe => `
+                <div class="recipe-card">
+                    <div class="recipe-header">
+                        <div class="recipe-title">${recipe.name}</div>
+                        <div class="recipe-meta">
+                            <span><i class="fas fa-clock"></i> ${recipe.cooking_time}</span>
+                            <span><i class="fas fa-signal"></i> ${recipe.difficulty}</span>
+                            <span><i class="fas fa-users"></i> ${recipe.servings} servings</span>
+                        </div>
+                    </div>
+                    <div class="recipe-body">
+                        <div class="ingredients-section">
+                            <div class="section-title">
+                                <i class="fas fa-list"></i> Ingredients
+                            </div>
+                            <ul class="ingredient-list">
+                                ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="instructions-section">
+                            <div class="section-title">
+                                <i class="fas fa-clipboard-list"></i> Instructions
+                            </div>
+                            <ol class="instruction-list">
+                                ${recipe.instructions.map(instruction => `<li>${instruction}</li>`).join('')}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            results.innerHTML = recipesHtml;
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            const results = document.getElementById('results');
+            results.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> ${message}</div>`;
+        }
+
+        function showSuccess(message) {
+            const results = document.getElementById('results');
+            const existingContent = results.innerHTML;
+            results.innerHTML = `<div class="success"><i class="fas fa-check-circle"></i> ${message}</div>` + existingContent;
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Free Food Recipe AI loaded successfully!');
+        });
+    </script>
+</body>
+</html>
